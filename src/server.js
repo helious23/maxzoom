@@ -18,10 +18,32 @@ const handleListen = () => console.log(`Listening on http://localhost:${PORT}`);
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const handleConnection = (socket) => {
-  console.log(socket);
-};
+const sockets = [];
 
-wss.on("connection", handleConnection);
+wss.on("connection", (socket) => {
+  sockets.push(socket);
+
+  socket["nickname"] = `익명${new Date().getTime().toString().slice(-4)}`;
+
+  console.log("Connected to Browser ✅");
+
+  socket.on("close", () => console.log("Disconnected from Browser ❌"));
+
+  socket.on("message", (msg) => {
+    const message = JSON.parse(msg.toString());
+
+    switch (message.type) {
+      case "new_message":
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${socket.nickname} : ${message.payload}`)
+        );
+        break;
+      case "nickname":
+        console.log(message.payload);
+        socket["nickname"] = message.payload;
+        break;
+    }
+  });
+});
 
 server.listen(PORT, handleListen);

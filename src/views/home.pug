@@ -9,6 +9,12 @@ html(lang="en")
     body 
         header
             h1 Max Zoom
-        main 
-            h2 Welcome to MaxZoom
+        main
+            form#nick
+                input(type="text", placeholder="닉네임을 정하세요" required)
+                button 저장하기
+            ul
+            form#message
+                input(type="text", placeholder="메세지를 작성하세요" required)
+                button 보내기
         script(src="/public/js/app.js")
