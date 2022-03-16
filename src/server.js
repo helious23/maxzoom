@@ -18,11 +18,24 @@ const handleListen = () => console.log(`Listening on http://localhost:${PORT}`);
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+// connection event 시, 실행 할 코드 작성
 wsServer.on("connection", (socket) => {
+  // enter_room event 실행 시 콜백 함수 실행
+  // 콜백 함수 인자 중 마지막 인자는 frontend 에서 넘겨준 콜백 함수
   socket.on("enter_room", (roomName, done) => {
-    socket.join(roomName);
+    socket.join(roomName); // roomName 방에 들어감
+    done(); // frontend 의 enter_room 콜백 함수 실행
+    socket.to(roomName).emit("welcome"); // roomName 방에 welcome event 실행
+  });
+
+  // disconnecting : disconnect 보다 조금 더 빨리 실행
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+  });
+
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", msg);
     done();
-    socket.to(roomName).emit("welcome");
   });
 });
 
