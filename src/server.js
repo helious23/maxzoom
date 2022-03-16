@@ -18,23 +18,59 @@ const handleListen = () => console.log(`Listening on http://localhost:${PORT}`);
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+const getPublicRooms = () => {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = wsServer;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+};
+
 // connection event 시, 실행 할 코드 작성
 wsServer.on("connection", (socket) => {
+  // 닉네임 정하지 않을 경우
+  socket["nickname"] = `익명${new Date().getTime().toString().slice(-4)}`;
+
+  socket.onAny((event) => {
+    console.log(`Socket Event: ${event}`);
+  });
+
   // enter_room event 실행 시 콜백 함수 실행
   // 콜백 함수 인자 중 마지막 인자는 frontend 에서 넘겨준 콜백 함수
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName); // roomName 방에 들어감
     done(); // frontend 의 enter_room 콜백 함수 실행
-    socket.to(roomName).emit("welcome"); // roomName 방에 welcome event 실행
+    socket.to(roomName).emit("welcome", socket.nickname); // roomName 방에 welcome event 실행
+    wsServer.sockets.emit("room_change", getPublicRooms());
   });
 
   // disconnecting : disconnect 보다 조금 더 빨리 실행
   socket.on("disconnecting", () => {
-    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+    socket.rooms.forEach((room) =>
+      socket.to(room).emit("bye", socket.nickname)
+    );
+  });
+
+  socket.on("disconnect", () => {
+    wsServer.sockets.emit("room_change", getPublicRooms());
   });
 
   socket.on("new_message", (msg, room, done) => {
-    socket.to(room).emit("new_message", msg);
+    socket.to(room).emit("new_message", `${socket.nickname} : ${msg}`);
+    done();
+  });
+
+  socket.on("nickname", (nickname, done) => {
+    if (nickname !== "") {
+      socket["nickname"] = nickname;
+    }
     done();
   });
 });
