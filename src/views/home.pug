@@ -10,10 +10,15 @@ html(lang="en")
         header
             h1 Max Zoom
         main
-            div#myStream
-                video#myFace(autoplay, playsinline, width="400", height="400")
-                button#mute 음소거
-                button#camera 카메라 끄기
-            select#cameras
+            #welcome
+                form
+                    input(type="text" placeholder="채팅방 이름" required)
+                    button 채팅방 들어가기
+            #call
+                #myStream
+                    video#myFace(autoplay, playsinline, width="400", height="400")
+                    button#mute 음소거
+                    button#camera 카메라 끄기
+                select#cameras
         script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js")
