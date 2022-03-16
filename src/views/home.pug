@@ -10,23 +10,10 @@ html(lang="en")
         header
             h1 Max Zoom
         main
-            div#name
-                h2 1. 닉네임을 정하세요.
-                form
-                    input(type="text" placeholder="닉네임을 입력하세요")
-                    button 저장하기
-            div#welcome
-                h4 Open Rooms: 
-                ul
-                h2 2. 채팅방 이름을 입력하세요.
-                form
-                    input(type="text" placeholder="방 이름" required)
-                    button 채팅방 들어가기
-            div#room
-                h3
-                ul 
-                form
-                    input(type="text" placeholder="메세지를 입력하세요" required)
-                    button 보내기
+            div#myStream
+                video#myFace(autoplay, playsinline, width="400", height="400")
+                button#mute 음소거
+                button#camera 카메라 끄기
+            select#cameras
         script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js")
