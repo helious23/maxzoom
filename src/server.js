@@ -1,5 +1,6 @@
 import http from "http";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 import express from "express";
 
 const app = express();
@@ -16,7 +17,16 @@ const PORT = 3000;
 const handleListen = () => console.log(`Listening on http://localhost:${PORT}`);
 
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
+
+instrument(wsServer, {
+  auth: false,
+});
 
 const getPublicRooms = () => {
   const {
@@ -33,6 +43,10 @@ const getPublicRooms = () => {
   return publicRooms;
 };
 
+const countRoom = (roomName) => {
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+};
+
 // connection event 시, 실행 할 코드 작성
 wsServer.on("connection", (socket) => {
   // 닉네임 정하지 않을 경우
@@ -46,15 +60,15 @@ wsServer.on("connection", (socket) => {
   // 콜백 함수 인자 중 마지막 인자는 frontend 에서 넘겨준 콜백 함수
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName); // roomName 방에 들어감
-    done(); // frontend 의 enter_room 콜백 함수 실행
-    socket.to(roomName).emit("welcome", socket.nickname); // roomName 방에 welcome event 실행
+    done(countRoom(roomName)); // frontend 의 enter_room 콜백 함수 실행
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName)); // roomName 방에 welcome event 실행
     wsServer.sockets.emit("room_change", getPublicRooms());
   });
 
   // disconnecting : disconnect 보다 조금 더 빨리 실행
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) =>
-      socket.to(room).emit("bye", socket.nickname)
+      socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1)
     );
   });
 

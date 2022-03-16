@@ -24,11 +24,11 @@ const showRoomNameForm = () => {
 };
 
 // div#welcome 숨기고 div#room 나타나게 함. roomName 보이게 함.
-const showRoom = () => {
+const showRoom = (newCount) => {
   welcome.hidden = true;
   room.hidden = false;
   const h3 = room.querySelector("#room h3");
-  h3.innerText = `Room ${roomName}`;
+  h3.innerText = `Room ${roomName} (${newCount})`;
 };
 
 const handleMessageSubmit = (e) => {
@@ -69,11 +69,15 @@ const handleRoomSubmit = (e) => {
 nameForm.addEventListener("submit", handleNickNameSubmit);
 
 // backend 에서 welcome event 실행 시 addMessage 실행
-socket.on("welcome", (user) => {
+socket.on("welcome", (user, newCount) => {
+  const h3 = room.querySelector("#room h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${user} 이/가 방에 들어왔습니다.`);
 });
 
-socket.on("bye", (user) => {
+socket.on("bye", (user, newCount) => {
+  const h3 = room.querySelector("#room h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${user} 이/가 방을 나갔습니다.`);
 });
 
